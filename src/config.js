@@ -16,7 +16,8 @@ const config = {
     },
     deepseek: {
         apiKey: process.env.DEEPSEEK_API_KEY,
-        apiUrl: process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions'
+        apiUrl: process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions',
+        model: process.env.DEEPSEEK_MODEL || 'deepseek-chat'
     },
     firebird: {
         host: process.env.FB_HOST,
@@ -34,6 +35,10 @@ const config = {
 
 if (!config.whatsapp.verifyToken) {
     console.warn('WA_VERIFY_TOKEN no está definido');
+}
+
+if (!config.deepseek.apiKey) {
+    console.warn('DEEPSEEK_API_KEY no está definido');
 }
 
 module.exports = config;
