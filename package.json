@@ -1,0 +1,20 @@
+{
+  "name": "whatsbot-aguila",
+  "version": "1.0.0",
+  "description": "Bot de WhatsApp integrado con n8n, DeepSeek y Microsip",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.21.0",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "node-firebird": "^2.21.0"
+  }
+}
