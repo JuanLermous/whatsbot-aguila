@@ -16,7 +16,7 @@ const config = {
     },
     deepseek: {
         apiKey: process.env.DEEPSEEK_API_KEY,
-        apiUrl: process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions'
+        apiUrl: process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions',
         apiUrl: process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions',
         model: process.env.DEEPSEEK_MODEL || 'deepseek-chat'
     },
@@ -38,11 +38,9 @@ if (!config.whatsapp.verifyToken) {
     console.warn('WA_VERIFY_TOKEN no está definido');
 }
 
-<<<<<<< HEAD
-=======
 if (!config.deepseek.apiKey) {
     console.warn('DEEPSEEK_API_KEY no está definido');
 }
 
->>>>>>> 2c361406e5c72d6d350e2a670b76e7269df2604b
+
 module.exports = config;
