@@ -1,23 +1,20 @@
 const express = require('express');
-const axios = require('axios');
 const config = require('./config');
 
-// Importamos los módulos que creaste en tu carpeta whatsapp/
+// Importamos los módulos de WhatsApp y la integración con n8n
 const { verificarWebhook } = require('./whatsapp/verify');
 const { enviarMensaje } = require('./whatsapp/client');
+const { enviarAN8N } = require('./integrations/n8n'); // <-- Tu nuevo módulo de integración
 
 const app = express();
 app.use(express.json());
 
-// URL de tu Webhook de n8n (puedes cambiarla por tu variable de entorno en .env)
-const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'http://localhost:5678/webhook/tu-token-unico';
-
-// 1. Ruta GET para la verificación de Meta (utiliza verify.js)
+// 1. Ruta GET para la verificación de Meta (Webhook)
 app.get('/webhook', (req, res) => {
     verificarWebhook(req, res);
 });
 
-// 2. Ruta POST para recibir mensajes, enviarlos a n8n y responder
+// 2. Ruta POST para recibir mensajes de WhatsApp
 app.post('/webhook', async (req, res) => {
     const body = req.body;
 
@@ -30,21 +27,18 @@ app.post('/webhook', async (req, res) => {
             console.log(`[Servidor] Mensaje recibido de ${remitente}: ${textoCliente}`);
 
             try {
-                // Reenviamos el mensaje a n8n para que procese el flujo híbrido (IA / Menú / BD)
-                const n8nResponse = await axios.post(N8N_WEBHOOK_URL, {
-                    remitente: remitente,
-                    mensaje: textoCliente
-                });
+                // Delegamos la petición a tu integración con n8n
+                const respuestaN8N = await enviarAN8N(remitente, textoCliente);
 
-                // Obtenemos la respuesta procesada que regresa n8n
-                const respuestaTexto = n8nResponse.data.respuesta || '¡Hola! Procesando tu solicitud en Tornillos Águila...';
+                // Extraemos el texto que devuelve n8n (o ponemos un respaldo por defecto)
+                const respuestaTexto = respuestaN8N.respuesta || '¡Hola! Procesando tu solicitud en Tornillos Águila...';
 
-                // Usamos nuestro módulo modular client.js para enviar la respuesta al usuario
+                // Enviamos la respuesta de vuelta al usuario por WhatsApp
                 await enviarMensaje(remitente, respuestaTexto);
 
             } catch (error) {
-                console.error('Error al comunicarse con n8n:', error.message);
-                await enviarMensaje(remitente, 'Lo sentimos, en este momento tenemos un pequeño detalle técnico. Inténtalo más tarde.');
+                console.error('Error al procesar el mensaje con n8n:', error.message);
+                await enviarMensaje(remitente, 'Lo sentimos, en este momento tenemos un detalle técnico. Inténtalo más tarde.');
             }
         }
         res.status(200).send('EVENT_RECEIVED');
