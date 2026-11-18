@@ -2,11 +2,9 @@ const axios = require('axios');
 
 const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
 
-/**
- * Envía el mensaje del usuario a n8n para que sea procesado por IA o flujos automatizados
- * @param {string} remitente - Número de teléfono de WhatsApp del cliente
- * @param {string} mensaje - Texto enviado por el usuario
- */
+   {string} remitente // Número de teléfono de WhatsApp del cliente
+   {string} mensaje // Texto enviado por el usuario
+ 
 async function enviarAN8N(remitente, mensaje) {
     try {
         const response = await axios.post(N8N_WEBHOOK_URL, {

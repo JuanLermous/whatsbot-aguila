@@ -1,13 +1,17 @@
 const axios = require('axios');
+const config = require('../config');
 
-const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
-const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
-const VERSION = 'v17.0';
-const BASE_URL = `https://graph.facebook.com/${VERSION}/${PHONE_NUMBER_ID}/messages`;
+const TOKEN = config.whatsapp.accessToken;
+const PHONE_ID = config.whatsapp.phoneNumberId;
 
-/**
- * Enviar mensaje de texto plano por WhatsApp Cloud API
- */
+/*Para depurar variables de entorno
+console.log("=== DEBUG WHATSAPP ===");
+console.log("Token detectado:", TOKEN ? "Sí (Existe)" : "¡NO! Está undefined");
+console.log("Phone ID detectado:", PHONE_ID);
+console.log("======================");
+*/
+const BASE_URL = `https://graph.facebook.com/v17.0/${PHONE_ID}/messages`;
+
 async function enviarTexto(to, mensaje) {
     try {
         const response = await axios.post(
@@ -19,7 +23,7 @@ async function enviarTexto(to, mensaje) {
                 text: { body: mensaje }
             },
             {
-                headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}` }
+                headers: { Authorization: `Bearer ${TOKEN}` }
             }
         );
         return response.data;
@@ -29,9 +33,6 @@ async function enviarTexto(to, mensaje) {
     }
 }
 
-/**
- * Función comodín requerida por el server.js
- */
 async function enviarMensaje(to, mensaje) {
     return await enviarTexto(to, mensaje);
 }

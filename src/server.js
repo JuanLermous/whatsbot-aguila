@@ -1,20 +1,21 @@
+require('dotenv').config();
 const express = require('express');
 const config = require('./config');
 
 // Importamos los módulos de WhatsApp y la integración con n8n
-const { verificarWebhook } = require('./whatsapp/verify');
-const { enviarMensaje } = require('./whatsapp/client');
-const { enviarAN8N } = require('./integrations/n8n'); // <-- Tu nuevo módulo de integración
+const { verificarWebhook } = require('./whatsapp/verify'); //verificacion del webhook de Meta (WhatsApp Cloud API)
+const { enviarMensaje } = require('./whatsapp/client');//funciones para enviar mensajes
+const { enviarAN8N } = require('./integrations/n8n');//Workflow de n8n para procesar mensajes y generar respuestas 
 
 const app = express();
 app.use(express.json());
 
-// 1. Ruta GET para la verificación de Meta (Webhook)
+// Ruta GET para la verificación de Meta (Webhook)
 app.get('/webhook', (req, res) => {
     verificarWebhook(req, res);
 });
 
-// 2. Ruta POST para recibir mensajes de WhatsApp
+//Ruta POST para recibir mensajes de WhatsApp
 app.post('/webhook', async (req, res) => {
     const body = req.body;
 
@@ -27,7 +28,7 @@ app.post('/webhook', async (req, res) => {
             console.log(`[Servidor] Mensaje recibido de ${remitente}: ${textoCliente}`);
 
             try {
-                // Delegamos la petición a tu integración con n8n
+                // le damos la peticion  a n8n
                 const respuestaN8N = await enviarAN8N(remitente, textoCliente);
 
                 // Extraemos el texto que devuelve n8n (o ponemos un respaldo por defecto)

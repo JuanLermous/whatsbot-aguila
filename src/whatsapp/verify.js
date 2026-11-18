@@ -1,9 +1,7 @@
-/**
- * Verificación del Webhook de Meta (WhatsApp Cloud API)
- */
+// Verificación del Webhook de Meta (WhatsApp Cloud API)
+const config = require('../config');
 function verificarWebhook(req, res) {
-    const VERIFY_TOKEN = process.env.WHASHAPP_VERIFY_TOKEN || 'token_seguro_tornillos_aguila';
-
+    const VERIFY_TOKEN = config.whatsapp.verifyToken;
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
