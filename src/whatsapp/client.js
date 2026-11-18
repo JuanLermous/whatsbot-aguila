@@ -4,7 +4,7 @@ const config = require('../config');
 const TOKEN = config.whatsapp.accessToken;
 const PHONE_ID = config.whatsapp.phoneNumberId;
 
-/*Para depurar variables de entorno
+/*Para depurar variables de entorno eliminar cuando salga a producción
 console.log("=== DEBUG WHATSAPP ===");
 console.log("Token detectado:", TOKEN ? "Sí (Existe)" : "¡NO! Está undefined");
 console.log("Phone ID detectado:", PHONE_ID);

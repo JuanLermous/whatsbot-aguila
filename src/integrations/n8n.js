@@ -2,19 +2,30 @@ const axios = require('axios');
 
 const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
 
-   {string} remitente // Número de teléfono de WhatsApp del cliente
-   {string} mensaje // Texto enviado por el usuario
- 
-async function enviarAN8N(remitente, mensaje) {
+/**
+ * Envía un evento asíncrono a n8n para bitácoras, correos o avisos en segundo plano.
+ * @param {string} remitente - Número de teléfono de WhatsApp del cliente
+ * @param {string} mensajeCliente - Texto enviado por el usuario
+ * @param {string} respuestaBot - Respuesta generada por el bot (DeepSeek / Sistema)
+ */
+async function enviarAN8N(remitente, mensajeCliente, respuestaBot) {
+    if (!N8N_WEBHOOK_URL) {
+        console.warn('[n8n] N8N_WEBHOOK_URL no está configurado en el .env. Se omite el evento.');
+        return;
+    }
+
     try {
         const response = await axios.post(N8N_WEBHOOK_URL, {
             remitente,
-            mensaje
+            mensajeCliente,
+            respuestaBot,
+            timestamp: new Date().toISOString()
         });
-        return response.data; // Espera un objeto como { respuesta: "Texto del bot" }
+        
+        return response.data;
     } catch (error) {
-        console.error('Error al emitir evento a n8n:', error.message);
-        throw error;
+        // Nota: Un fallo en n8n no debe interrumpir ni tirar la conversación de WhatsApp
+        console.error('Error al emitir evento en segundo plano a n8n:', error.message);
     }
 }
 
