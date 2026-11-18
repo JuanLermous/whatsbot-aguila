@@ -1,5 +1,7 @@
-const { conectarDB } = require('./firebird'); // Ajusta la ruta según corresponda
+//Archivo de consultas
 
+const { conectarDB } = require('./firebird');
+//FUNCION SOLO DE PRUEBA CAMBIAR DESPUES
 async function obtenerClientes() {
     const db = await conectarDB();
     return new Promise((resolve, reject) => {
@@ -12,7 +14,7 @@ async function obtenerClientes() {
         });
     });
 }
-
+//FUNCION SOLO DE PRUEBA CAMBIAR DESPUES
 async function buscarArticulos(filtro) {
     const db = await conectarDB();
     return new Promise((resolve, reject) => {
@@ -27,6 +29,10 @@ async function buscarArticulos(filtro) {
     });
 }
 
+
+
+
+//SECCION PARA GUARDAR BITACORA DE CONVERSACIONES DEL CHATBOT EN FIREBIRD
 /**
  * Inserta un registro en la tabla de bitácora del chatbot.
  * @param {string} remitente - Número de WhatsApp del cliente
@@ -53,5 +59,5 @@ async function guardarBitacora(remitente, mensajeCliente, respuestaBot) {
 module.exports = {
     obtenerClientes,
     buscarArticulos,
-    guardarBitacora // <-- Exportamos la nueva función
+    guardarBitacora
 };

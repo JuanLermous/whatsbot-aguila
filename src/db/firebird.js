@@ -1,3 +1,5 @@
+//conexion inicial a la base de datos Firebird para realizar consultas
+
 const Firebird = require('node-firebird');
 const config = require('../config'); 
 

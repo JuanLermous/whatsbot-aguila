@@ -1,6 +1,7 @@
 const axios = require('axios');
+const config = require('../config'); 
 
-const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
+const N8N_WEBHOOK_URL = config.n8n.webhookUrl;
 
 /**
  * Envía un evento asíncrono a n8n para bitácoras, correos o avisos en segundo plano.
@@ -15,6 +16,7 @@ async function enviarAN8N(remitente, mensajeCliente, respuestaBot) {
     }
 
     try {
+        //aqui se manda el json con los datos del remitente, mensajeCliente y respuestaBot al webhook de n8n
         const response = await axios.post(N8N_WEBHOOK_URL, {
             remitente,
             mensajeCliente,

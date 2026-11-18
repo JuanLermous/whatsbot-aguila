@@ -1,14 +1,17 @@
+/*ARCHIVO PRINCIPAL DEL SERVIDOR EXPRESS PARA EL BOT DE WHATSAPP DE TORNILLOS ÁGUILA
+AQUI SE MANEJAN LAS RUTAS DE WEBHOOK, SE RECIBEN LOS MENSAJES SE PROCESAN CON 
+ MENUS DETERMINISTAS, DEEPSEEK, FIREBIRD Y N8N*/
 
 const express = require('express');
 const config = require('./config');
 
-// Importación de módulos del bot, IA y pasarela de eventos
+// Importación de módulos del bot
 const { verificarWebhook } = require('./whatsapp/verify');
 const { enviarMensaje } = require('./whatsapp/client');
 const { preguntarDeepSeek } = require('./ia/deepseek');
-const { consultarFirebird } = require('./db/firebird'); // Descomenta cuando conectes tu microservicio de datos
+const { consultarFirebird } = require('./db/firebird'); 
 const {guardarBitacora} = require('./db/queries');
-const { enviarAN8N } = require('./integrations/n8n'); // Event Sink para n8n en segundo plano
+const { enviarAN8N } = require('./integrations/n8n'); 
 
 const app = express();
 app.use(express.json());
