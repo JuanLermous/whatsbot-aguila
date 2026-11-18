@@ -6,7 +6,8 @@ const config = require('./config');
 const { verificarWebhook } = require('./whatsapp/verify');
 const { enviarMensaje } = require('./whatsapp/client');
 const { preguntarDeepSeek } = require('./ia/deepseek');
-// const { consultarFirebird } = require('./services/firebird'); // Descomenta cuando conectes tu microservicio de datos
+const { consultarFirebird } = require('./db/firebird'); // Descomenta cuando conectes tu microservicio de datos
+const {guardarBitacora} = require('./db/queries');
 const { enviarAN8N } = require('./integrations/n8n'); // Event Sink para n8n en segundo plano
 
 const app = express();
@@ -30,18 +31,27 @@ app.post('/webhook', async (req, res) => {
             console.log(`[Servidor Bot] Mensaje recibido de ${remitente}: "${textoCliente}"`);
 
             try {
-                // PASO 1 (Opcional): Consultar stock/precios en Firebird/Microsip si el mensaje lo requiere
-                // const datosInventario = await consultarFirebird(textoCliente);
 
-                // PASO 2: Consultar a DeepSeek pasando el ID del cliente para mantener el historial y el texto libre
-                const respuestaBot = await preguntarDeepSeek(remitente, textoCliente /*, datosInventario*/);
+                // PASO 1: Consultar a DeepSeek pasando el ID del cliente para mantener el historial y el texto libre
+               
+               
+                //  const respuestaBotDeepseek = await preguntarDeepSeek(remitente, textoCliente /*, datosInventario*/);
 
-                // PASO 3: Responder de inmediato al cliente a través de la API de Meta (WhatsApp)
-                await enviarMensaje(remitente, respuestaBot);
+                // PASO 2: Responder de inmediato al cliente a través de la API de Meta (WhatsApp)
+                await enviarMensaje(remitente, /*respuestaBotDeepseek*/ 
+                    "mensaje de prueba desde el bot de Tornillos Águila. ¡Gracias por tu mensaje!"); // Cambia esto por respuestaBot cuando integres DeepSeek
 
-                // PASO 4: Emitir el evento a n8n en segundo plano (Asíncrono y no bloqueante)
-                // Se usa .catch() para asegurar que si n8n llega a fallar, la conversación del bot jamás se interrumpa
-                enviarAN8N(remitente, textoCliente, respuestaBot).catch(err => {
+                // ---------------------------------------------------------
+                // PASO 3: Guardar en la bitácora de Firebird en segundo plano
+                // ---------------------------------------------------------
+                guardarBitacora(remitente, textoCliente, /*respuestaBotDeepseek*/ "mensaje de respuesta de prueba ").catch(err => {
+                    console.error('Fallo al registrar en la bitácora de Firebird:', err);
+                });
+
+                // ---------------------------------------------------------
+                // PASO 5: Emitir el evento a n8n en segundo plano (para correos y avisos)
+                // ---------------------------------------------------------
+                enviarAN8N(remitente, textoCliente,/*respuestaBotDeepseek*/  "mensaje de respuesta de prueba ").catch(err => {
                     console.error('[Segundo Plano] Error al notificar evento a n8n:', err.message);
                 });
 

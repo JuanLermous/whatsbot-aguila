@@ -8,7 +8,7 @@ function verificarWebhook(req, res) {
 
     if (mode && token) {
         if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-            console.log('Webhook verificado correctamente por Meta.');
+            //console.log('Webhook verificado correctamente por Meta.');
             res.status(200).send(challenge);
         } else {
             res.sendStatus(403);
