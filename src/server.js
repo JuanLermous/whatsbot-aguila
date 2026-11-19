@@ -12,6 +12,7 @@ const { preguntarDeepSeek } = require('./ia/deepseek');
 const { consultarFirebird } = require('./db/firebird'); 
 const {guardarBitacora} = require('./db/queries');
 const { enviarAN8N } = require('./integrations/n8n'); 
+const { procesarMensajeEntrante } = require('./flows/index');
 
 const app = express();
 app.use(express.json());
@@ -29,32 +30,38 @@ app.post('/webhook', async (req, res) => {
         if (body.entry && body.entry[0].changes && body.entry[0].changes[0].value.messages) {
             const mensajeInfo = body.entry[0].changes[0].value.messages[0];
             const remitente = mensajeInfo.from;
-            const textoCliente = mensajeInfo.text ? mensajeInfo.text.body.trim() : '';
+            const textoCliente = mensajeInfo.text
+                ? mensajeInfo.text.body.trim()
+                : (mensajeInfo.type === 'interactive' && mensajeInfo.interactive?.type === 'list_reply'
+                    ? mensajeInfo.interactive.list_reply.id
+                    : '');
 
             console.log(`[Servidor Bot] Mensaje recibido de ${remitente}: "${textoCliente}"`);
 
             try {
 
-                // PASO 1: Consultar a DeepSeek pasando el ID del cliente para mantener el historial y el texto libre
-               
-               
-                //  const respuestaBotDeepseek = await preguntarDeepSeek(remitente, textoCliente /*, datosInventario*/);
+                // PASO 1: Resolver respuesta a través de flujos deterministas (flows/index y flows/menu)
+                const respuestaFinal = await procesarMensajeEntrante(remitente, textoCliente);
 
                 // PASO 2: Responder de inmediato al cliente a través de la API de Meta (WhatsApp)
-                await enviarMensaje(remitente, /*respuestaBotDeepseek*/ 
-                    "mensaje de prueba desde el bot de Tornillos Águila. ¡Gracias por tu mensaje!"); // Cambia esto por respuestaBot cuando integres DeepSeek
+                await enviarMensaje(remitente, respuestaFinal);
+
+                const textoLog = typeof respuestaFinal === 'string'
+                    ? respuestaFinal
+                    : (respuestaFinal?.interactive?.body?.text || '[Menú interactivo Tornillos Águila]');
 
                 // ---------------------------------------------------------
                 // PASO 3: Guardar en la bitácora de Firebird en segundo plano
                 // ---------------------------------------------------------
-                guardarBitacora(remitente, textoCliente, /*respuestaBotDeepseek*/ "mensaje de respuesta de prueba ").catch(err => {
+                guardarBitacora(remitente, textoCliente, textoLog).catch(err => {
                     console.error('Fallo al registrar en la bitácora de Firebird:', err);
                 });
 
                 // ---------------------------------------------------------
                 // PASO 5: Emitir el evento a n8n en segundo plano (para correos y avisos)
                 // ---------------------------------------------------------
-                enviarAN8N(remitente, textoCliente,/*respuestaBotDeepseek*/  "mensaje de respuesta de prueba ").catch(err => {
+                enviarAN8N(remitente, textoCliente, textoLog).catch(err => {
+                    console.error(textoLog.text);
                     console.error('[Segundo Plano] Error al notificar evento a n8n:', err.message);
                 });
 

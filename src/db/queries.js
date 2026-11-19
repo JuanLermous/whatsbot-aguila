@@ -1,35 +1,8 @@
 //Archivo de consultas
-
-const { conectarDB } = require('./firebird');
-//FUNCION SOLO DE PRUEBA CAMBIAR DESPUES
-async function obtenerClientes() {
-    const db = await conectarDB();
-    return new Promise((resolve, reject) => {
-        db.query('SELECT FIRST 10 * FROM CLIENTES', [], (err, result) => {
-            db.detach();
-            if (err) {
-                return reject(err);
-            }
-            resolve(result);
-        });
-    });
-}
-//FUNCION SOLO DE PRUEBA CAMBIAR DESPUES
-async function buscarArticulos(filtro) {
-    const db = await conectarDB();
-    return new Promise((resolve, reject) => {
-        const query = 'SELECT FIRST 10 * FROM ARTICULOS WHERE NOMBRE CONTAINING ?';
-        db.query(query, [filtro], (err, result) => {
-            db.detach();
-            if (err) {
-                return reject(err);
-            }
-            resolve(result);
-        });
-    });
-}
-
-
+const {
+    conectarDB,
+    consultarFirebird
+     } = require('./firebird');
 
 
 //SECCION PARA GUARDAR BITACORA DE CONVERSACIONES DEL CHATBOT EN FIREBIRD
@@ -56,8 +29,58 @@ async function guardarBitacora(remitente, mensajeCliente, respuestaBot) {
     });
 }
 
+//FUNCIONES PARA OBTENER Y GUARDAR EL ESTADO DE LA CONVERSASION ACTUAL DEL USUARIO EN FIREBIRD
+async function obtenerEstadoUsuario(remitente) {
+    const sql = 'SELECT FIRST 1 FLUJO_ACTUAL, DATOS_TEMP FROM CHATBOT_SESIONES WHERE TELEFONO = ?';
+    const rows = await consultarFirebird(sql, [remitente]);
+
+    if (!rows || rows.length === 0) {
+        return { flujo: 'IDLE', datos: {} };
+    }
+
+    const fila = rows[0];
+    let datosParseados = {};
+    if (fila.DATOS_TEMP) {
+        try {
+            datosParseados = JSON.parse(fila.DATOS_TEMP);
+        } catch (e) {
+            datosParseados = {};
+        }
+    }
+
+    return {
+        flujo: fila.FLUJO_ACTUAL || 'IDLE',
+        datos: datosParseados
+    };
+}
+
+async function guardarEstadoUsuario(remitente, flujo, datos = {}) {
+    const jsonDatos = JSON.stringify(datos || {});
+    const existe = await consultarFirebird(
+        'SELECT FIRST 1 TELEFONO FROM CHATBOT_SESIONES WHERE TELEFONO = ?',
+        [remitente]
+    );
+
+    if (existe && existe.length > 0) {
+        await consultarFirebird(
+            'UPDATE CHATBOT_SESIONES SET FLUJO_ACTUAL = ?, DATOS_TEMP = ?, ACTUALIZADO_EN = CURRENT_TIMESTAMP WHERE TELEFONO = ?',
+            [flujo, jsonDatos, remitente]
+        );
+    } else {
+        await consultarFirebird(
+            'INSERT INTO CHATBOT_SESIONES (TELEFONO, FLUJO_ACTUAL, DATOS_TEMP, ACTUALIZADO_EN) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
+            [remitente, flujo, jsonDatos]
+        );
+    }
+}
+
+async function limpiarEstadoUsuario(remitente) {
+    await guardarEstadoUsuario(remitente, 'IDLE', {});
+}
+
 module.exports = {
-    obtenerClientes,
-    buscarArticulos,
-    guardarBitacora
+    guardarBitacora,
+    obtenerEstadoUsuario,
+    guardarEstadoUsuario,
+    limpiarEstadoUsuario
 };

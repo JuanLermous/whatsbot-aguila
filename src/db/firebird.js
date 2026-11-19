@@ -25,4 +25,22 @@ function conectarDB() {
     });
 }
 
-module.exports = { conectarDB };
+async function consultarFirebird(sql, params = []) {
+    const db = await conectarDB();
+
+    return new Promise((resolve, reject) => {
+        db.query(sql, params, (err, result) => {
+            db.detach(() => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(result || []);
+            });
+        });
+    });
+}
+
+module.exports = { 
+    conectarDB,
+    consultarFirebird 
+};

@@ -13,15 +13,25 @@ console.log("======================");
 const BASE_URL = `https://graph.facebook.com/v17.0/${PHONE_ID}/messages`;
 
 async function enviarTexto(to, mensaje) {
+    const payload = typeof mensaje === 'string'
+        ? {
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: to,
+            type: 'text',
+            text: { body: mensaje }
+        }
+        : {
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: to,
+            ...mensaje
+        };
+
     try {
         const response = await axios.post(
             BASE_URL,
-            {
-                messaging_product: 'whatsapp',
-                to: to,
-                type: 'text',
-                text: { body: mensaje }
-            },
+            payload,
             {
                 headers: { Authorization: `Bearer ${TOKEN}` }
             }
