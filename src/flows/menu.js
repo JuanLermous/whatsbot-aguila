@@ -16,7 +16,8 @@ function construirMenuPrincipalPayload(remitente) {
                     'Estoy aquí para apoyarte y brindarte la mejor atención.\n\n' +
                     '📋 Para continuar, por favor elige una opción de la lista que aparece aquí abajo 👇.\n' +
                     'Así podré ayudarte de la manera más rápida y sencilla. ⚡ \n'+
-                    'Si quiere cancelar la operación, solo escribe *cancelar*. ⚡' 
+                    '\n'+
+                    'Si quiere cancelar la operación, solo escribe *cancelar*. ' 
             },
             footer: {
                 text: 'Gracias por tu preferencia'
@@ -34,7 +35,8 @@ function construirMenuPrincipalPayload(remitente) {
                             { id: 'ubicacion', title: '📍 Ubicación' },
                             { id: 'horarios', title: '⏰ Horarios' },
                             { id: 'sugerencias', title: '💡 Sugerencias' },
-                            { id: 'contacto', title: '📞 Contacto' }
+                            { id: 'contacto', title: '📞 Contacto' },
+                            {id: 'catalogo', title: '📚 Catalogo' }
                         ]
                     }
                 ]
