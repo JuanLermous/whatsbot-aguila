@@ -8,6 +8,9 @@ const pedido = require('./pedido');
 const saldo = require('./saldo');
 const estatico = require('./estatico');
 
+// [DEEPSEEK] Interpretación de texto libre y consultas abiertas
+const { interpretarMensaje, preguntarDeepSeek } = require('../ia/deepseek');
+
 const {
     obtenerEstadoUsuario,
     limpiarEstadoUsuario
@@ -55,7 +58,9 @@ async function procesarMensajeEntrante(remitente, textoCliente) {
 
     // SI NO ES UNA OPCION DEL MENU, PROCESAR EL FLUJO ACTUAL
 
-    if (sesion && sesion.flujo && sesion.flujo !== 'IDLE') {
+    const enFlujo = Boolean(sesion && sesion.flujo && sesion.flujo !== 'IDLE');
+
+    if (enFlujo) {
 
         const respuestaFlujo = await procesarFlujoMasOpciones(
             remitente,
@@ -68,7 +73,80 @@ async function procesarMensajeEntrante(remitente, textoCliente) {
         }
     }
 
+
+    // [DEEPSEEK] SI NO ESTA EN NINGUN FLUJO, INTERPRETAR EL TEXTO LIBRE
+
+    if (!enFlujo) {
+
+        const respuestaIA = await procesarTextoLibre(remitente, textoCliente);
+
+        if (respuestaIA !== undefined) {
+            return respuestaIA;
+        }
+    }
+
     return MENSAJE_GUIA_HOLA;
+}
+
+
+// [DEEPSEEK] TEXTO LIBRE: DEEPSEEK DETECTA LA INTENCION Y EXTRAE LOS DATOS
+
+async function procesarTextoLibre(remitente, textoCliente) {
+
+    try {
+
+        const interpretacion = await interpretarMensaje(textoCliente);
+
+        // Si DeepSeek falla o no hay API key, se comporta como antes (mensaje guía)
+        if (interpretacion.fallo) {
+            return undefined;
+        }
+
+        const { intencion, datos } = interpretacion;
+
+        // Dato que el cliente ya dio (clave o nombre/medida del artículo)
+        const dato = (datos.clave || datos.articulo || '').toLowerCase();
+
+        switch (intencion) {
+
+            case 'pedido': {
+                const inicio = await pedido.iniciar(remitente);
+                return dato ? await pedido.procesar(remitente, dato) : inicio;
+            }
+
+            case 'cotizar': {
+                const inicio = await cotizar.iniciar(remitente);
+                return dato ? await cotizar.procesar(remitente, dato) : inicio;
+            }
+
+            case 'saldo':
+                return await saldo.iniciarSaldo(remitente);
+
+            case 'estado_cuenta':
+                return await saldo.iniciarEstadoCuenta(remitente);
+
+            case 'ayuda': {
+                // TODO (integración n8n): aquí también debe avisarse por correo
+                // a bot8@tornillosaguila.com cuando el cliente pide ayuda.
+                const contacto = await estatico.procesarOpcionMenu(remitente, 'contacto');
+                return '🙋 Con gusto te ayudamos. Puedes comunicarte directamente con un asesor:\n\n' + contacto;
+            }
+
+            case 'menu':
+                await limpiarEstadoUsuario(remitente);
+                return construirMenuPrincipalPayload(remitente);
+
+            case 'consulta':
+                return await preguntarDeepSeek(remitente, textoCliente);
+
+            default:
+                return undefined;
+        }
+
+    } catch (error) {
+        console.error('[DeepSeek] Error en texto libre:', error.message);
+        return undefined;
+    }
 }
 
 
