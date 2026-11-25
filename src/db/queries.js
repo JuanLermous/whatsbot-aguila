@@ -96,16 +96,15 @@ async function obtenerClientes(limite = 20) {
       ESTATUS,
       LIMITE_CREDITO,
       CONTACTO1,
-      CONTACTO2,
-      NOTAS
+      CONTACTO2
     FROM CLIENTES
     ORDER BY NOMBRE
   `;
   return consultarFirebird(sql);
 }
 
-async function buscarClientePorNombre(termino, limite = 15) {
-  const cap = Math.max(1, Number(limite) || 15);
+async function buscarClientePorNombre(nombre, limite = 20) {
+  const cap = Math.max(1, Number(limite) || 20);
   const sql = `
     SELECT FIRST ${cap}
       CLIENTE_ID,
@@ -118,7 +117,7 @@ async function buscarClientePorNombre(termino, limite = 15) {
     WHERE UPPER(NOMBRE) LIKE UPPER(?)
     ORDER BY NOMBRE
   `;
-  return consultarFirebird(sql, [`%${termino}%`]);
+  return consultarFirebird(sql, [`%${nombre}%`]);
 }
 
 async function buscarArticulosConPrecio(termino, limite = 20) {
@@ -180,8 +179,16 @@ async function obtenerMovimientosCC(clienteId, limite = 20) {
   return consultarFirebird(sql, [clienteId]);
 }
 
-async function obtenerPedidosCliente(clienteId, limite = 20) {
+async function obtenerPedidosCliente(clienteId, limite = 20, tipoDocto = null) {
   const cap = Math.max(1, Number(limite) || 20);
+  const params = [clienteId];
+  let filtroTipo = '';
+
+  if (tipoDocto) {
+    filtroTipo = ' AND TIPO_DOCTO = ?';
+    params.push(String(tipoDocto).toUpperCase());
+  }
+
   const sql = `
     SELECT FIRST ${cap}
       DOCTO_VE_ID,
@@ -196,10 +203,10 @@ async function obtenerPedidosCliente(clienteId, limite = 20) {
       ESTATUS,
       APLICADO
     FROM DOCTOS_VE
-    WHERE CLIENTE_ID = ?
+    WHERE CLIENTE_ID = ?${filtroTipo}
     ORDER BY FECHA DESC, DOCTO_VE_ID DESC
   `;
-  return consultarFirebird(sql, [clienteId]);
+  return consultarFirebird(sql, params);
 }
 
 module.exports = {
