@@ -237,6 +237,25 @@ async function obtenerDetalleDocumento(doctoVeId) {
   return consultarFirebird(sql, [doctoVeId]);
 }
 
+async function buscarClientePorContacto(termino, limite = 20) {
+  const cap = Math.max(1, Number(limite) || 20);
+  const texto = String(termino || '').trim();
+  const sql = `
+    SELECT FIRST ${cap}
+      CLIENTE_ID,
+      NOMBRE,
+      ESTATUS,
+      LIMITE_CREDITO,
+      CONTACTO1,
+      CONTACTO2
+    FROM CLIENTES
+    WHERE CONTACTO1 CONTAINING ?
+       OR CONTACTO2 CONTAINING ?
+    ORDER BY NOMBRE
+  `;
+  return consultarFirebird(sql, [texto, texto]);
+}
+
 module.exports = {
   guardarBitacora,
   obtenerEstadoUsuario,
@@ -244,6 +263,7 @@ module.exports = {
   limpiarEstadoUsuario,
   obtenerClientes,
   buscarClientePorNombre,
+  buscarClientePorContacto,
   buscarArticulosConPrecio,
   obtenerSaldosCliente,
   obtenerMovimientosCC,
