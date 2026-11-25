@@ -1,7 +1,7 @@
 const axios = require('axios');
 const config = require('../config'); 
 
-const N8N_WEBHOOK_URL = config.n8n.webhookUrl;
+const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/notificaciones';
 
 /**
  * Envía un evento asíncrono a n8n para bitácoras, correos o avisos en segundo plano.
@@ -30,5 +30,20 @@ async function enviarAN8N(remitente, textoCliente, textoLog) {
         console.error('Error al emitir evento en segundo plano a n8n:', error.message);
     }
 }
+async function enviarPedidoAN8N({ remitente, claveCliente, folio, items }) {
+    if (!N8N_WEBHOOK_URL) return;
+    try {
+        await axios.post(N8N_WEBHOOK_URL, {
+            tipo: 'pedido',
+            remitente,
+            claveCliente,
+            folio,
+            items, // [{ clave, descripcion, cantidad }]
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error al notificar pedido a n8n:', error.message);
+    }
+}
 
-module.exports = { enviarAN8N };
+module.exports = { enviarAN8N, enviarPedidoAN8N };

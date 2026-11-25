@@ -1,0 +1,191 @@
+{
+  "name": "Notificaciones Bot Tornillos Aguila",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "notificaciones",
+        "options": {}
+      },
+      "id": "db7cd7d6-b504-4b36-9bd1-e62787e0c328",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        96
+      ],
+      "webhookId": "notificaciones-bot"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "if1-c",
+              "leftValue": "={{ $json.body.tipo }}",
+              "rightValue": "pedido",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "dcdcd06e-4578-4b9e-885f-8bc1deff1e10",
+      "name": "IF es pedido",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "if2-c",
+              "leftValue": "={{ $json.body.textoCliente }}",
+              "rightValue": "/\\b(asesor|asistencia|ayuda|humano|persona real|hablar con alguien|atenci[oó]n)\\b/i",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c4c7bb0c-202c-4f92-93b8-ea52fe77e4b8",
+      "name": "IF pide asesor",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "ishases04@gmail.com",
+        "toEmail": "ishases04@gmail.com",
+        "subject": "=Nuevo pedido de WhatsApp: cliente {{ $json.body.remitente }}",
+        "html": "=<p>Hola, equipo de <b>Tornillos Águila</b>.</p><p>Un cliente registró un nuevo pedido desde el bot de WhatsApp:</p><ul><li>🧾 <b>Folio:</b> {{ $json.body.folio || 'N/D' }}</li><li>📱 <b>Teléfono del cliente:</b> {{ $json.body.remitente }}</li><li>👤 <b>Clave de cliente:</b> {{ $json.body.claveCliente || 'N/D' }}</li><li>🕒 <b>Fecha y Hora:</b> {{ new Date($json.body.timestamp).toLocaleString('es-MX', {timeZone: 'America/Monterrey'}) }}</li></ul><p><b>Artículos:</b></p><ul>{{ ($json.body.items || []).map(i => '<li>' + i.cantidad + ' x ' + i.clave + ' - ' + (i.descripcion || '') + '</li>').join('') }}</ul><p>Por favor, ingresen al sistema para dar seguimiento.</p>",
+        "options": {}
+      },
+      "id": "ed69592e-d66b-4f99-a8e8-a6d73be36797",
+      "name": "Correo pedido",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        736,
+        0
+      ],
+      "webhookId": "a92cbef0-74d8-4562-ad78-9287a800083b",
+      "credentials": {
+        "smtp": {
+          "id": "iFSImb9oQGstdWUR",
+          "name": "SMTP account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "ishases04@gmail.com",
+        "toEmail": "ishases04@gmail.com",
+        "subject": "=Alerta de WhatsApp: Solicitud de cliente {{ $json.body.remitente }}",
+        "html": "=<p>Hola, equipo de <b>Tornillos Águila</b>.</p><p>Se ha registrado una consulta en el bot de WhatsApp que requiere atención:</p><ul><li>📱 <b>Teléfono del cliente:</b> {{ $json.body.remitente }}</li><li>💬 <b>Mensaje recibido:</b> \"{{ $json.body.textoCliente }}\"</li><li>🤖 <b>Respuesta del Bot:</b> \"{{ $json.body.textoLog }}\"</li><li>🕒 <b>Fecha y Hora:</b> {{ new Date($json.body.timestamp).toLocaleString('es-MX', {timeZone: 'America/Monterrey'}) }}</li></ul><p>Por favor, ingresen al sistema para dar seguimiento.</p>",
+        "options": {}
+      },
+      "id": "240f6c0d-5995-4d18-806e-9e17c759ab76",
+      "name": "Correo asistencia",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        736,
+        144
+      ],
+      "webhookId": "aa5a8718-58a8-4b48-9ce5-ba1b2234146d",
+      "credentials": {
+        "smtp": {
+          "id": "iFSImb9oQGstdWUR",
+          "name": "SMTP account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "IF es pedido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF es pedido": {
+      "main": [
+        [
+          {
+            "node": "Correo pedido",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF pide asesor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF pide asesor": {
+      "main": [
+        [
+          {
+            "node": "Correo asistencia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3e000364-478b-45f9-b45a-551a20741611",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "238432ddf1ee45c0a1dc3c62df16bbcef3eb153899e44fd3c33b4a3cfa298184"
+  },
+  "nodeGroups": [],
+  "id": "Anp8Ht1N96Qs1SkK",
+  "tags": []
+}
