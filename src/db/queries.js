@@ -209,6 +209,34 @@ async function obtenerPedidosCliente(clienteId, limite = 20, tipoDocto = null) {
   return consultarFirebird(sql, params);
 }
 
+async function obtenerDetalleDocumento(doctoVeId) {
+  const sql = `
+    SELECT
+      D.DOCTO_VE_DET_ID,
+      D.DOCTO_VE_ID,
+      D.POSICION,
+      D.ARTICULO_ID,
+      D.CLAVE_ARTICULO,
+      A.NOMBRE AS NOMBRE_ARTICULO,
+      A.UNIDAD_VENTA,
+      D.UNIDADES,
+      D.UNIDADES_COMPROM,
+      D.UNIDADES_SURT_DEV,
+      D.UNIDADES_A_SURTIR,
+      D.PRECIO_UNITARIO,
+      D.PCTJE_DSCTO,
+      D.DSCTO_ART,
+      D.DSCTO_EXTRA,
+      D.PRECIO_TOTAL_NETO,
+      D.ROL
+    FROM DOCTOS_VE_DET D
+    LEFT JOIN ARTICULOS A ON A.ARTICULO_ID = D.ARTICULO_ID
+    WHERE D.DOCTO_VE_ID = ?
+    ORDER BY D.POSICION ASC, D.DOCTO_VE_DET_ID ASC
+  `;
+  return consultarFirebird(sql, [doctoVeId]);
+}
+
 module.exports = {
   guardarBitacora,
   obtenerEstadoUsuario,
@@ -219,5 +247,6 @@ module.exports = {
   buscarArticulosConPrecio,
   obtenerSaldosCliente,
   obtenerMovimientosCC,
-  obtenerPedidosCliente
+  obtenerPedidosCliente,
+  obtenerDetalleDocumento
 };
