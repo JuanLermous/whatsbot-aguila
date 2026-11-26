@@ -41,11 +41,19 @@ app.post('/webhook', async (req, res) => {
             try {
 
                 // PASO 1: Resolver respuesta a través de flujos deterministas (flows/index y flows/menu)
+             //   console.log('[DEBUG] Iniciando procesamiento del mensaje');
+
                 const respuestaFinal = await procesarMensajeEntrante(remitente, textoCliente);
 
-                // PASO 2: Responder de inmediato al cliente a través de la API de Meta (WhatsApp)
+               // console.log('[DEBUG] Respuesta generada:', respuestaFinal);
+
+                //console.log('[DEBUG] Enviando respuesta a WhatsApp');
+
                 await enviarMensaje(remitente, respuestaFinal);
 
+                //console.log('[DEBUG] Respuesta enviada correctamente');
+
+                // PASO 2: Responder de inmediato al cliente a través de la API de Meta (WhatsApp)
                 const textoLog = typeof respuestaFinal === 'string'
                     ? respuestaFinal
                     : (respuestaFinal?.interactive?.body?.text || '[Menú interactivo Tornillos Águila]');
@@ -60,11 +68,9 @@ app.post('/webhook', async (req, res) => {
                 // ---------------------------------------------------------
                 // PASO 5: Emitir el evento a n8n en segundo plano (para correos y avisos)
                 // ---------------------------------------------------------
-                enviarAN8N(remitente, textoCliente, textoLog).catch(err => {
-                    console.error(textoLog.text);
+               enviarAN8N(remitente, textoCliente, textoLog).catch(err => {
                     console.error('[Segundo Plano] Error al notificar evento a n8n:', err.message);
                 });
-
             } catch (error) {
                 console.error('[Error Crítico en Servidor]:', error.message);
                 await enviarMensaje(remitente, 'Lo sentimos, en este momento tenemos un detalle técnico. Inténtalo más tarde.');

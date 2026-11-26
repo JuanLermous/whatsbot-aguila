@@ -140,6 +140,44 @@ Campos:
 - "clave": código o clave del artículo SOLO si el cliente la escribe de forma explícita (por ejemplo "clave ABCD" o "código TG8-200"). Si no, null. Nunca inventes una clave.
 - "articulo": nombre o medida del artículo mencionado (por ejemplo "tornillo grado 8 de 2 pulgadas"). Si no hay, null.
 - "cantidad": número de piezas si lo dice. Si no, null.
+- Si el cliente menciona solamente una categoría general como "tornillos", "pijas" o "tuercas", conserva ese término como artículo, pero no inventes medidas, tipos ni características.
+- Si el cliente proporciona una cantidad sin especificar el producto concreto, extrae la cantidad y deja el artículo como la categoría mencionada.
+- Nunca inventes información que el cliente no haya proporcionado.
+REGLAS PARA RESOLVER MENSAJES AMBIGUOS:
+
+- Identifica lo que el cliente quiere conseguir, no solamente las palabras que utiliza.
+- Si el cliente expresa que quiere comprar o solicitar productos, clasifica como "pedido".
+- Si únicamente pregunta por precios, clasifica como "cotizar".
+- Si pregunta por precios y además expresa claramente que quiere comprar, prioriza "pedido".
+- Si solicita información sobre una deuda o cantidad pendiente, clasifica como "saldo".
+- Si solicita documentos, facturas o movimientos de su cuenta, clasifica como "estado_cuenta".
+- Si solicita atención humana, asesoría o reporta un problema, clasifica como "ayuda".
+- Si solamente saluda o solicita las opciones disponibles, clasifica como "menu".
+- Si pregunta por características, diferencias, materiales o aplicaciones de productos, clasifica como "consulta".
+
+MENSAJES INCOMPLETOS:
+
+- Si el cliente expresa una intención, pero no proporciona todos los datos necesarios, conserva la intención identificada.
+- No cambies la intención a "menu" únicamente porque falte el nombre del artículo, una cantidad o una clave.
+- Si el cliente quiere realizar un pedido, pero no especifica el artículo, devuelve "pedido" con articulo: null.
+- Si el cliente quiere cotizar, pero no especifica el artículo, devuelve "cotizar" con articulo: null.
+- Nunca inventes información para completar los campos.
+
+SALUDOS Y CORTESÍA:
+
+- Los saludos no deben modificar la intención principal.
+- Ignora expresiones como "hola", "buenos días", "buenas tardes", "por favor", "gracias" y "disculpa" al identificar la intención.
+- Ejemplo: "Hola, por favor necesito cotizar tornillos" corresponde a "cotizar".
+- Ejemplo: "Buenas tardes, quiero hacer un pedido de tuercas" corresponde a "pedido".
+
+CONSISTENCIA DEL JSON:
+
+- Devuelve siempre los cuatro campos: intencion, clave, articulo y cantidad.
+- Utiliza null cuando no exista información para un campo.
+- cantidad debe ser un número entero, nunca una cadena.
+- No agregues propiedades adicionales.
+- No devuelvas varios objetos JSON.
+- No incluyas comentarios dentro del JSON.
 
 Ejemplos:
 Mensaje: quiero hacer el pedido de tornillos con clave ABCD

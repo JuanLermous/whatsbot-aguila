@@ -3,7 +3,7 @@ const {
     conectarDB,
     consultarFirebird
      } = require('./firebird');
-
+const PRECIO_EMPRESA_PUBLICO = 118340;
 
 //SECCION PARA GUARDAR BITACORA DE CONVERSACIONES DEL CHATBOT EN FIREBIRD
 /**
@@ -55,32 +55,79 @@ async function obtenerEstadoUsuario(remitente) {
 }
 
 async function guardarEstadoUsuario(remitente, flujo, datos = {}) {
-    const jsonDatos = JSON.stringify(datos || {});
-    const existe = await consultarFirebird(
-        'SELECT FIRST 1 TELEFONO FROM CHATBOT_SESIONES WHERE TELEFONO = ?',
-        [remitente]
-    );
+    try {
+        console.log('[DEBUG DB] Iniciando guardarEstadoUsuario');
 
-    if (existe && existe.length > 0) {
-        await consultarFirebird(
-            'UPDATE CHATBOT_SESIONES SET FLUJO_ACTUAL = ?, DATOS_TEMP = ?, ACTUALIZADO_EN = CURRENT_TIMESTAMP WHERE TELEFONO = ?',
-            [flujo, jsonDatos, remitente]
+        const jsonDatos = JSON.stringify(datos || {});
+
+        console.log('[DEBUG DB] JSON generado:', jsonDatos);
+        console.log('[DEBUG DB] Longitud del JSON:', jsonDatos.length);
+
+        console.log('[DEBUG DB] Consultando existencia del teléfono:', remitente);
+
+        const existe = await consultarFirebird(
+            'SELECT FIRST 1 TELEFONO FROM CHATBOT_SESIONES WHERE TELEFONO = ?',
+            [remitente]
         );
-    } else {
-        await consultarFirebird(
-            'INSERT INTO CHATBOT_SESIONES (TELEFONO, FLUJO_ACTUAL, DATOS_TEMP, ACTUALIZADO_EN) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
-            [remitente, flujo, jsonDatos]
-        );
+
+        console.log('[DEBUG DB] Resultado:', existe);
+
+        if (existe && existe.length > 0) {
+            console.log('[DEBUG DB] Ejecutando UPDATE');
+
+            await consultarFirebird(
+                'UPDATE CHATBOT_SESIONES SET FLUJO_ACTUAL = ?, DATOS_TEMP = ?, ACTUALIZADO_EN = CURRENT_TIMESTAMP WHERE TELEFONO = ?',
+                [flujo, jsonDatos, remitente]
+            );
+
+        } else {
+            console.log('[DEBUG DB] Ejecutando INSERT');
+
+            await consultarFirebird(
+                'INSERT INTO CHATBOT_SESIONES (TELEFONO, FLUJO_ACTUAL, DATOS_TEMP, ACTUALIZADO_EN) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
+                [remitente, flujo, jsonDatos]
+            );
+        }
+
+        console.log('[DEBUG DB] Estado guardado correctamente');
+
+    } catch (error) {
+        console.error('[DEBUG DB] ERROR:', error);
+        throw error;
     }
 }
-
 async function limpiarEstadoUsuario(remitente) {
     await guardarEstadoUsuario(remitente, 'IDLE', {});
+}
+
+// Buscar artículos y sus precios en la lista PUBLICO
+async function buscarArticulosConPrecio(texto) {
+    const sql = `
+        SELECT FIRST 10
+            A.ARTICULO_ID,
+            A.NOMBRE,
+            A.ESTATUS,
+            A.UNIDAD_VENTA,
+            PA.PRECIO,
+            PA.MONEDA_ID
+        FROM ARTICULOS A
+        LEFT JOIN PRECIOS_ARTICULOS PA
+            ON PA.ARTICULO_ID = A.ARTICULO_ID
+            AND PA.PRECIO_EMPRESA_ID = ?
+        WHERE A.NOMBRE CONTAINING ?
+        ORDER BY A.NOMBRE
+    `;
+
+    return await consultarFirebird(sql, [
+        PRECIO_EMPRESA_PUBLICO,
+        texto
+    ]);
 }
 
 module.exports = {
     guardarBitacora,
     obtenerEstadoUsuario,
     guardarEstadoUsuario,
-    limpiarEstadoUsuario
+    limpiarEstadoUsuario,
+    buscarArticulosConPrecio
 };

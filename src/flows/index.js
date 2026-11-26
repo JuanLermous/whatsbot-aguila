@@ -1,3 +1,4 @@
+
 // Aqui se implementa la logica de los flujos de conversación,
 // para que el bot pueda responder a los mensajes entrantes de los clientes.
 
@@ -40,7 +41,7 @@ async function procesarMensajeEntrante(remitente, textoCliente) {
 
         await limpiarEstadoUsuario(remitente);
 
-        return '✅ Operación cancelada. Escribe *hola* para ver las opciones nuevamente.';
+        return '✅ Operación cancelada. Escribe *hola* para ver las opciones nuevamente o manda tu solicitud directamente.';
     }
 
     // LEER ESTADO ACTUAL DE LA CONVERSACION
@@ -97,27 +98,25 @@ async function procesarTextoLibre(remitente, textoCliente) {
 
         const interpretacion = await interpretarMensaje(textoCliente);
 
-        // Si DeepSeek falla o no hay API key, se comporta como antes (mensaje guía)
+        // Si DeepSeek falla o no hay API key, se comporta como antes
         if (interpretacion.fallo) {
             return undefined;
         }
 
         const { intencion, datos } = interpretacion;
 
-        // Dato que el cliente ya dio (clave o nombre/medida del artículo)
-        const dato = (datos.clave || datos.articulo || '').toLowerCase();
+        console.log('[DeepSeek] Intención detectada:', intencion);
+        console.log('[DeepSeek] Datos extraídos:', datos);
 
         switch (intencion) {
 
-            case 'pedido': {
-                const inicio = await pedido.iniciar(remitente);
-                return dato ? await pedido.procesar(remitente, dato) : inicio;
-            }
+            case 'pedido':
+                // Redirigir al flujo de pedidos con los datos detectados
+                return await pedido.iniciar(remitente, datos);
 
-            case 'cotizar': {
-                const inicio = await cotizar.iniciar(remitente);
-                return dato ? await cotizar.procesar(remitente, dato) : inicio;
-            }
+            case 'cotizar':
+                // Redirigir al flujo de cotizaciones con los datos detectados
+                return await cotizar.iniciar(remitente, datos);
 
             case 'saldo':
                 return await saldo.iniciarSaldo(remitente);
@@ -129,6 +128,7 @@ async function procesarTextoLibre(remitente, textoCliente) {
                 // TODO (integración n8n): aquí también debe avisarse por correo
                 // a bot8@tornillosaguila.com cuando el cliente pide ayuda.
                 const contacto = await estatico.procesarOpcionMenu(remitente, 'contacto');
+
                 return '🙋 Con gusto te ayudamos. Puedes comunicarte directamente con un asesor:\n\n' + contacto;
             }
 
@@ -158,12 +158,9 @@ async function procesarFlujoMasOpciones(remitente, sesion, textoLimpio) {
 
         return await cotizar.procesar(remitente, textoLimpio);
     }
-
-    if (sesion.flujo === 'PEDIDO_ARTICULO') {
-
+    if (sesion.flujo.startsWith('PEDIDO_')) {
         return await pedido.procesar(remitente, textoLimpio);
     }
-
     if (sesion.flujo === 'SALDO_DEUDOR' || sesion.flujo === 'EDO_CUENTA') {
 
         return await saldo.procesar(remitente, sesion, textoLimpio);
